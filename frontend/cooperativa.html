@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#2e9e5b" />
+  <title>Field Shift — Cooperativa</title>
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="icon" href="/icons/icon.svg" type="image/svg+xml" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <link rel="stylesheet" href="/css/app.css" />
+</head>
+<body>
+  <div id="offline-banner" data-i18n="common.offline"></div>
+
+  <header class="flex items-center justify-between px-4 py-3 no-print">
+    <h1 class="font-bold text-lg" data-i18n="coop.title"></h1>
+    <div class="flex gap-2">
+      <button onclick="FSI18N.toggle()" class="text-sm border rounded-full px-3 py-1 bg-white" data-i18n="common.lang"></button>
+      <button onclick="window.print()" class="text-sm text-white rounded-full px-3 py-1" style="background:var(--fs-green)" data-i18n="coop.print"></button>
+    </div>
+  </header>
+
+  <main class="px-4 max-w-xl mx-auto">
+    <p class="text-sm text-gray-600 mb-3 no-print" data-i18n="coop.help"></p>
+
+    <div class="fs-card print-card p-5" id="card">
+      <div class="flex items-center justify-between border-b pb-3 mb-3">
+        <div class="flex items-center gap-2">
+          <img src="/icons/icon.svg" alt="" class="w-8 h-8" />
+          <span class="font-extrabold" style="color:var(--fs-green)">Field Shift</span>
+        </div>
+        <span id="c-coords" class="text-xs font-mono text-gray-500"></span>
+      </div>
+
+      <div class="grid gap-3 text-sm">
+        <div class="flex items-center justify-between">
+          <span class="text-gray-500" data-i18n="coop.risk"></span>
+          <span id="c-risk" class="font-bold text-white rounded-full px-3 py-1"></span>
+        </div>
+        <div>
+          <p class="text-gray-500" data-i18n="coop.water"></p>
+          <p id="c-water" class="font-semibold"></p>
+        </div>
+        <div>
+          <p class="text-gray-500" data-i18n="coop.rotation"></p>
+          <p id="c-rotation" class="font-semibold"></p>
+        </div>
+        <div>
+          <p class="text-gray-500" data-i18n="coop.planting"></p>
+          <p id="c-planting" class="font-semibold"></p>
+        </div>
+        <div>
+          <p class="text-gray-500" data-i18n="coop.actions"></p>
+          <p id="c-actions" class="font-semibold"></p>
+        </div>
+      </div>
+
+      <div class="flex items-end justify-between border-t mt-3 pt-3">
+        <div class="text-xs text-gray-500 max-w-[60%]">
+          <p class="font-semibold mb-1" data-i18n="coop.sources"></p>
+          <p>GPM IMERG · SMAP · MODIS/VIIRS · NASA POWER · GRACE-FO</p>
+        </div>
+        <div class="text-center">
+          <div id="qr" class="inline-block"></div>
+          <p class="text-[10px] text-gray-400 mt-1" data-i18n="coop.scan"></p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <nav class="fs-nav no-print">
+    <a href="/index.html"><span>🏠</span><span data-i18n="nav.home"></span></a>
+    <a href="/campo.html"><span>🗺️</span><span data-i18n="nav.field"></span></a>
+    <a href="/perfil.html"><span>🧑‍🌾</span><span data-i18n="nav.profile"></span></a>
+    <a href="/panel.html"><span>📊</span><span data-i18n="nav.panel"></span></a>
+    <a href="/copiloto.html"><span>💬</span><span data-i18n="nav.copilot"></span></a>
+  </nav>
+
+  <script src="/js/i18n.js"></script>
+  <script src="/js/store.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/pwa.js"></script>
+  <script src="/js/cooperativa.js"></script>
+</body>
+</html>

@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+*.egg-info/
+.pytest_cache/
+
+# Datos / cachés (los gestiona el Flux 2)
+backend/data/cache/
+*.nc
+*.tif
+*.tiff
+
+# Entorno
+.env
+.env.*
+
+# SO / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

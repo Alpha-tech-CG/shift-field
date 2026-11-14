@@ -1,0 +1,7 @@
+# Field Shift — Flux 1 (Producto / Full-Stack)
+# Backend mínimo: sirve la PWA + API mock (contrato 8.6).
+# El motor real de datos/ML/IA (Flux 2) añadirá pandas, geopandas, xarray,
+# rasterio, scikit-learn, xgboost, etc. en su propio módulo.
+
+fastapi==0.115.5
+uvicorn[standard]==0.32.1

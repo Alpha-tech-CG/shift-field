@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#2e9e5b" />
+  <title>Field Shift — Perfil</title>
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="icon" href="/icons/icon.svg" type="image/svg+xml" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/css/app.css" />
+</head>
+<body>
+  <div id="offline-banner" data-i18n="common.offline"></div>
+
+  <header class="flex items-center justify-between px-4 py-3">
+    <h1 class="font-bold text-lg" data-i18n="profile.title"></h1>
+    <button onclick="FSI18N.toggle()" class="text-sm border rounded-full px-3 py-1 bg-white" data-i18n="common.lang"></button>
+  </header>
+
+  <main class="px-4 max-w-xl mx-auto">
+    <form id="profile-form" class="grid gap-5 mt-2">
+      <div>
+        <label class="block font-semibold mb-2" data-i18n="profile.crop"></label>
+        <select name="crop" class="w-full border rounded-xl p-3 bg-white">
+          <option value="maize" data-i18n="crop.maize"></option>
+          <option value="beans" data-i18n="crop.beans"></option>
+          <option value="sorghum" data-i18n="crop.sorghum"></option>
+          <option value="millet" data-i18n="crop.millet"></option>
+          <option value="cover_crop" data-i18n="crop.cover_crop"></option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block font-semibold mb-2" data-i18n="profile.soil"></label>
+        <select name="soil_type" class="w-full border rounded-xl p-3 bg-white">
+          <option value="sandy" data-i18n="soil.sandy"></option>
+          <option value="sandy_loam" selected data-i18n="soil.sandy_loam"></option>
+          <option value="loam" data-i18n="soil.loam"></option>
+          <option value="clay_loam" data-i18n="soil.clay_loam"></option>
+          <option value="clay" data-i18n="soil.clay"></option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block font-semibold mb-2" data-i18n="profile.irrigation"></label>
+        <div class="flex gap-3">
+          <label class="flex-1 border rounded-xl p-3 bg-white flex items-center gap-2 cursor-pointer">
+            <input type="radio" name="irrigation" value="no" checked />
+            <span data-i18n="profile.irrigation.no"></span>
+          </label>
+          <label class="flex-1 border rounded-xl p-3 bg-white flex items-center gap-2 cursor-pointer">
+            <input type="radio" name="irrigation" value="yes" />
+            <span data-i18n="profile.irrigation.yes"></span>
+          </label>
+        </div>
+      </div>
+
+      <div>
+        <label class="block font-semibold mb-2" data-i18n="profile.priority"></label>
+        <select name="priority" class="w-full border rounded-xl p-3 bg-white">
+          <option value="save_water" data-i18n="profile.prio.water"></option>
+          <option value="balanced" selected data-i18n="profile.prio.balanced"></option>
+          <option value="max_yield" data-i18n="profile.prio.yield"></option>
+        </select>
+      </div>
+
+      <button type="submit" class="w-full text-white font-bold text-lg rounded-2xl py-4"
+              style="background:var(--fs-green)" data-i18n="profile.submit"></button>
+    </form>
+  </main>
+
+  <nav class="fs-nav">
+    <a href="/index.html"><span>🏠</span><span data-i18n="nav.home"></span></a>
+    <a href="/campo.html"><span>🗺️</span><span data-i18n="nav.field"></span></a>
+    <a href="/perfil.html" class="active"><span>🧑‍🌾</span><span data-i18n="nav.profile"></span></a>
+    <a href="/panel.html"><span>📊</span><span data-i18n="nav.panel"></span></a>
+    <a href="/copiloto.html"><span>💬</span><span data-i18n="nav.copilot"></span></a>
+  </nav>
+
+  <script src="/js/i18n.js"></script>
+  <script src="/js/store.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/pwa.js"></script>
+  <script src="/js/perfil.js"></script>
+</body>
+</html>
