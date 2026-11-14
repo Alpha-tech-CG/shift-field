@@ -10,6 +10,7 @@ GRACE-FO + reglas agronómicas + ML) manteniendo este formato de salida.
 from __future__ import annotations
 
 import hashlib
+import math
 from datetime import date, timedelta
 from typing import Any
 
@@ -208,6 +209,30 @@ def generate_recommendation(payload: dict[str, Any]) -> dict[str, Any]:
         "(NDVI) y NASA POWER (radiación y evapotranspiración)."
     )
 
+    # --- Series temporales (8 semanas) para los gráficos del panel ----
+    n = 8
+    labels = [(today - timedelta(weeks=(n - 1 - i))).strftime("%d/%m")
+              for i in range(n)]
+
+    def _serie(base, amp, ndigits=2):
+        vals = [round(base + math.sin(i * 0.8 + s * 6.283) * amp, ndigits)
+                for i in range(n)]
+        vals[-1] = round(base, ndigits)  # ancla el último al valor actual
+        return vals
+
+    temperature_c = round(24 + s * 6, 1)
+    rain_week = max(1, round(rainfall_60d / n))
+    norm_week = max(1, round(rainfall_normal / n))
+    series = {
+        "labels": labels,
+        "rainfall_mm": [max(0, int(v)) for v in _serie(rain_week, rain_week * 0.6, 0)],
+        "rainfall_normal_mm": [norm_week] * n,
+        "soil_moisture": [max(0.02, v) for v in _serie(soil_moisture, 0.03)],
+        "ndvi": [min(0.9, max(0.1, v)) for v in _serie(0.55 + ndvi_trend, 0.05)],
+        "temperature_c": _serie(temperature_c, 2.0, 1),
+        "solar_radiation": _serie(solar_radiation, 2.0, 1),
+    }
+
     return {
         "risk_score": risk_score,
         "risk_level": risk_level,
@@ -237,6 +262,7 @@ def generate_recommendation(payload: dict[str, Any]) -> dict[str, Any]:
             "evapotranspiration": evapotranspiration,
         },
         "ai_explanation": ai_explanation,
+        "series": series,
         "_mock": True,  # bandera: datos simulados, los reemplazará el Flux 2
     }
 

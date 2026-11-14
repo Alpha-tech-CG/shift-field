@@ -3,7 +3,7 @@
    - App shell (HTML/CSS/JS/íconos): cache-first con respaldo de red.
    - API (/api/*): network-first (la app usa su propia caché en localStorage).
    Así la PWA abre y muestra los últimos datos aunque no haya conexión. */
-const CACHE = "field-shift-v2";
+const CACHE = "field-shift-v3";
 const SHELL = [
   "/", "/index.html", "/campo.html", "/perfil.html", "/panel.html",
   "/copiloto.html", "/cooperativa.html",
