@@ -1,0 +1,15 @@
+{
+  "name": "Field Shift",
+  "short_name": "Field Shift",
+  "description": "Decide qué sembrar antes de la sequía, con datos NASA.",
+  "lang": "es",
+  "start_url": "/index.html",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f4f7f3",
+  "theme_color": "#2e9e5b",
+  "icons": [
+    { "src": "/icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
