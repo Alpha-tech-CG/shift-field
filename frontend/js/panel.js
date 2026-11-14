@@ -2,7 +2,7 @@
 (function () {
   const t = (k) => FSI18N.t(k);
   let data = null;
-  let rainChart = null;
+  const charts = {};
 
   const RISK_COLOR = { low: "#2e9e5b", moderate: "#e8870c", high: "#d64545" };
 
@@ -102,24 +102,8 @@
       `<div class="bg-gray-50 rounded-xl p-2"><p class="text-gray-500">${t(k)}</p><p class="font-bold">${v}</p></div>`
     ).join("");
 
-    // Gráfico lluvia
-    const ctx = document.getElementById("rain-chart");
-    if (rainChart) rainChart.destroy();
-    rainChart = new Chart(ctx, {
-      type: "bar",
-      data: {
-        labels: [t("ind.rainfall"), t("ind.rainfall_normal")],
-        datasets: [{
-          data: [ind.rainfall_60d_mm, ind.rainfall_normal_mm],
-          backgroundColor: ["#2f80ed", "#9db7d6"],
-          borderRadius: 8,
-        }],
-      },
-      options: {
-        plugins: { legend: { display: false } },
-        scales: { y: { beginAtZero: true, title: { display: true, text: "mm" } } },
-      },
-    });
+    // Gráficos (series temporales NASA)
+    drawCharts();
 
     // Rotaciones
     document.getElementById("rotations").innerHTML = data.rotations.map((r, i) => {
@@ -137,6 +121,73 @@
 
     // Explicación IA
     document.getElementById("ai-explain").textContent = data.ai_explanation || "";
+  }
+
+  function mkChart(id, cfg) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (charts[id]) charts[id].destroy();
+    charts[id] = new Chart(el, cfg);
+  }
+
+  function baseOpts(yTitle) {
+    return {
+      plugins: { legend: { display: true, labels: { boxWidth: 12, font: { size: 10 } } } },
+      scales: { y: { beginAtZero: false, title: { display: true, text: yTitle } } },
+      elements: { line: { borderWidth: 2 } },
+    };
+  }
+
+  function drawCharts() {
+    const s = data.series;
+    const ind = data.nasa_indicators;
+    const area = (label, arr, color, fill) => ({
+      label, data: arr, borderColor: color, backgroundColor: fill || color,
+      tension: .35, pointRadius: 2, fill: !!fill,
+    });
+
+    if (s && s.labels) {
+      mkChart("rain-chart", {
+        type: "bar",
+        data: { labels: s.labels, datasets: [
+          { type: "bar", label: t("ind.rainfall"), data: s.rainfall_mm, backgroundColor: "#2f80ed", borderRadius: 6 },
+          { type: "line", label: t("chart.normal"), data: s.rainfall_normal_mm, borderColor: "#9db7d6", borderDash: [5, 4], pointRadius: 0, tension: 0 },
+        ] },
+        options: baseOpts("mm"),
+      });
+      mkChart("soil-chart", {
+        type: "line",
+        data: { labels: s.labels, datasets: [area(t("ind.soil_moisture"), s.soil_moisture, "#2f80ed", "rgba(47,128,237,.12)")] },
+        options: baseOpts("m³/m³"),
+      });
+      mkChart("ndvi-chart", {
+        type: "line",
+        data: { labels: s.labels, datasets: [area("NDVI", s.ndvi, "#2e9e5b", "rgba(46,158,91,.12)")] },
+        options: baseOpts("NDVI"),
+      });
+      mkChart("climate-chart", {
+        type: "line",
+        data: { labels: s.labels, datasets: [
+          { label: t("chart.temp"), data: s.temperature_c, borderColor: "#d64545", yAxisID: "y", tension: .35, pointRadius: 2 },
+          { label: t("chart.solar"), data: s.solar_radiation, borderColor: "#e8870c", yAxisID: "y1", tension: .35, pointRadius: 2 },
+        ] },
+        options: {
+          plugins: { legend: { display: true, labels: { boxWidth: 12, font: { size: 10 } } } },
+          scales: {
+            y: { position: "left", title: { display: true, text: "°C" } },
+            y1: { position: "right", grid: { drawOnChartArea: false }, title: { display: true, text: "MJ/m²" } },
+          },
+        },
+      });
+    } else {
+      // Respaldo si no hay series (p. ej. caché antigua).
+      mkChart("rain-chart", {
+        type: "bar",
+        data: { labels: [t("ind.rainfall"), t("ind.rainfall_normal")],
+          datasets: [{ data: [ind.rainfall_60d_mm, ind.rainfall_normal_mm], backgroundColor: ["#2f80ed", "#9db7d6"], borderRadius: 8 }] },
+        options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } },
+      });
+    }
   }
 
   document.addEventListener("fs:langchange", () => { if (data) render(); });
