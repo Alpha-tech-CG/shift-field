@@ -79,3 +79,22 @@ body.offline #offline-banner { display:block; }
 
 .spin { animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* Micro-interacción táctil: ligera respuesta al pulsar botones y enlaces. */
+button, a { transition: transform .08s ease, filter .08s ease; }
+button:active, a:active { transform: scale(.985); }
+
+/* Accesibilidad: foco visible con teclado. */
+a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible {
+  outline: 3px solid #9fd3b4; outline-offset: 2px;
+}
+
+/* Cuando no hay conexión, el banner no debe tapar el encabezado. */
+body.offline { padding-top: 30px; }
+
+/* Chips de preguntas sugeridas (copiloto). */
+.chip-q {
+  font-size: 12px; background:#fff; border:1px solid #d7e3da; color:#2f5f45;
+  border-radius: 999px; padding: 6px 12px; cursor: pointer; white-space: nowrap;
+}
+.chip-q:active { filter: brightness(.96); }

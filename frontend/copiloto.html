@@ -7,6 +7,10 @@
   <title>Field Shift — Copiloto</title>
   <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="icon" href="/icons/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Field Shift" />
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="/css/app.css" />
 </head>
@@ -21,6 +25,7 @@
   <main class="px-4 max-w-xl mx-auto">
     <p class="text-sm text-gray-600 mb-3" data-i18n="copilot.help"></p>
     <div id="chat" class="grid gap-3 mb-4"></div>
+    <div id="chips" class="flex gap-2 overflow-x-auto pb-2 mb-1 no-print"></div>
     <form id="chat-form" class="flex gap-2 sticky bottom-20 bg-[var(--fs-bg)] py-2">
       <input id="q" class="flex-1 border rounded-xl p-3 bg-white" data-i18n-ph="copilot.placeholder" />
       <button class="text-white font-bold rounded-xl px-5" style="background:var(--fs-green)" data-i18n="copilot.send"></button>
