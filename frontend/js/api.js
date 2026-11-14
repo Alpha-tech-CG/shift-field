@@ -44,5 +44,25 @@
     }
   }
 
-  window.FSApi = { getRecommendation, askCopilot };
+  async function getBacktesting(payload) {
+    try {
+      const res = await fetch(BASE + "/api/backtesting", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(Object.assign({}, payload, { lang: lang() })),
+      });
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      const data = await res.json();
+      try { localStorage.setItem("fs_last_bt", JSON.stringify(data)); } catch (e) {}
+      return { data, offline: false };
+    } catch (e) {
+      try {
+        const c = JSON.parse(localStorage.getItem("fs_last_bt") || "null");
+        if (c) return { data: c, offline: true };
+      } catch (_) {}
+      throw e;
+    }
+  }
+
+  window.FSApi = { getRecommendation, askCopilot, getBacktesting };
 })();

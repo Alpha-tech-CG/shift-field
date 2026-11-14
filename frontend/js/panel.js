@@ -1,5 +1,7 @@
 /* Field Shift — panel : demande la recommandation et la dessine (design v2). */
 (function () {
+  // Garde-fou : pas de parcelle choisie → on renvoie vers la carte.
+  if (!FSStore.getField()) { window.location.replace("/campo.html"); return; }
   const t = (k) => FSI18N.t(k);
   let data = null;
   const charts = {};
@@ -62,6 +64,24 @@
     rl.textContent = t("risk." + data.risk_level);
     rl.style.color = color;
     document.getElementById("risk-score").textContent = data.risk_score + " / 100";
+
+    // Pourquoi ce risque (composantes)
+    const whyEl = document.getElementById("risk-why");
+    if (whyEl) {
+      const ICON = { rainfall: "solar:cloud-rain-linear", soil_moisture: "solar:water-linear", ndvi: "solar:leaf-linear", heat: "solar:danger-triangle-linear" };
+      const LVL = { ok: "text-chart-4", warn: "text-accent-foreground", bad: "text-destructive" };
+      whyEl.innerHTML = (data.risk_components || []).map((c) => `
+        <div class="flex items-center gap-4">
+          <div class="size-12 rounded-2xl bg-muted/60 flex items-center justify-center shrink-0 ${LVL[c.level] || ""}">
+            <iconify-icon icon="${ICON[c.factor] || "solar:info-circle-linear"}" width="24" height="24"></iconify-icon>
+          </div>
+          <div class="flex-1">
+            <p class="font-semibold text-base">${t("rc." + c.factor)}</p>
+            <p class="text-sm font-medium ${LVL[c.level] || ""}">${c.value}</p>
+          </div>
+          <div class="text-right text-xs text-muted-foreground">${c.source}<br>${t("rc.weight")} ${c.weight}</div>
+        </div>`).join("");
+    }
 
     // Budget d'eau
     const wb = data.water_budget;
