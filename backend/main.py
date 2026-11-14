@@ -21,7 +21,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from mock_engine import copilot_answer, generate_recommendation
+from mock_engine import backtesting, copilot_answer, generate_recommendation
 
 FRONTEND_DIR = (Path(__file__).resolve().parent.parent / "frontend")
 
@@ -50,6 +50,12 @@ async def recommendation(payload: dict) -> JSONResponse:
     """Devuelve la recomendación completa para un campo (contrato 8.6)."""
     result = generate_recommendation(payload or {})
     return JSONResponse(result)
+
+
+@app.post("/api/backtesting")
+async def backtest(payload: dict) -> JSONResponse:
+    """Démo backtesting : saisons sèches passées + « aurait prévenu ? »."""
+    return JSONResponse(backtesting(payload or {}))
 
 
 @app.post("/api/copilot")

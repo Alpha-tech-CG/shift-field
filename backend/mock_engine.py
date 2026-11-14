@@ -204,6 +204,18 @@ def generate_recommendation(payload: dict[str, Any]) -> dict[str, Any]:
         "solar_radiation": _serie(solar_radiation, 2.0, 1),
     }
 
+    # Décomposition du risque (chaque composante : valeur, niveau, source, poids).
+    rc_rain = "bad" if rainfall_60d < 0.7 * rainfall_normal else "warn" if rainfall_60d < 0.9 * rainfall_normal else "ok"
+    rc_soil = "bad" if soil_moisture < 0.12 else "warn" if soil_moisture < 0.2 else "ok"
+    rc_ndvi = "bad" if ndvi_trend < -0.1 else "warn" if ndvi_trend < 0 else "ok"
+    rc_heat = "bad" if evapotranspiration > 5.5 else "warn" if evapotranspiration > 4.5 else "ok"
+    risk_components = [
+        {"factor": "rainfall", "value": f"{rainfall_60d}/{rainfall_normal} mm", "level": rc_rain, "source": "GPM IMERG", "weight": "35%"},
+        {"factor": "soil_moisture", "value": f"{soil_moisture} m³/m³", "level": rc_soil, "source": "SMAP", "weight": "25%"},
+        {"factor": "ndvi", "value": f"{ndvi_trend}", "level": rc_ndvi, "source": "MODIS/VIIRS", "weight": "20%"},
+        {"factor": "heat", "value": f"{evapotranspiration} mm/j · {temperature_c}°C", "level": rc_heat, "source": "NASA POWER", "weight": "20%"},
+    ]
+
     return {
         "risk_score": risk_score,
         "risk_level": risk_level,
@@ -228,55 +240,168 @@ def generate_recommendation(payload: dict[str, Any]) -> dict[str, Any]:
         },
         "ai_explanation": ai_explanation,
         "series": series,
+        "risk_components": risk_components,
         "_mock": True,
     }
 
 
-# --- Copilote (mock) -------------------------------------------------------
+# --- Copilote (mock, orienté par l'intention de la question) ---------------
+INTENT_KW = {
+    "water": ["eau", "agua", "acqua", "water", "assez", "enough", "suffis", "suffic"],
+    "timing": ["quand", "when", "quando", "semer", "sow", "plant", "semin", "date", "moment", "wann"],
+    "rotation": ["rotation", "rotazione", "culture", "coltura", "crop", "variété", "variete"],
+    "irrigation": ["irrig", "riego", "arros"],
+}
 COPILOT = {
     "fr": {
-        "low": "Le risque de sécheresse est bas sur ton champ.",
-        "moderate": "Le risque de sécheresse est modéré : agis avec prudence.",
-        "high": "Le risque de sécheresse est élevé sur ton champ.",
-        "enough_water": "D'après les données, il y a assez d'eau pour semer.",
-        "risky": "L'eau est juste ; envisage de réduire la densité ou de choisir une culture plus résistante.",
-        "not_enough_water": "Il n'y a pas assez d'eau maintenant ; mieux vaut attendre ou changer de culture/rotation.",
-        "tail": "Cette réponse s'appuie sur les données NASA (GPM, SMAP, MODIS, POWER) et des règles agronomiques. C'est une estimation avec des limites : valide toujours avec ton expérience locale et ta coopérative.",
-        "limit": "Réponse de démonstration. Le vrai copilote (Claude API) sera intégré par le Flux 2.",
+        "ack": "Bonne question.",
+        "risk": {"low": "Le risque de sécheresse est bas.", "moderate": "Le risque de sécheresse est modéré.", "high": "Le risque de sécheresse est élevé."},
+        "the_crop": "ta culture",
+        "water_head": "Côté eau : tu as {avail} mm disponibles et {crop} a besoin de {need} mm.",
+        "w_enough": "C'est suffisant pour semer.",
+        "w_risky": "C'est juste — réduis la densité ou choisis une culture moins gourmande.",
+        "w_not": "Il manque {deficit} mm : mieux vaut attendre la pluie ou changer de culture.",
+        "timing": {"plant_now": "Tu peux semer maintenant.", "wait": "Mieux vaut attendre.", "switch_crop": "Change plutôt de culture ou de rotation."},
+        "timing_window": "Fenêtre conseillée : {window}.",
+        "rotation": "La rotation la plus sûre ici : {rot0}. Elle économise l'eau et protège le sol.",
+        "irrigation": "Sans irrigation, tout repose sur la pluie et l'humidité du sol. {wline} Le haricot ou le sorgho demandent moins d'eau que le maïs.",
+        "tail": "(Données NASA : GPM, SMAP, MODIS, POWER. Estimation avec limites — valide avec ta coopérative.)",
+        "limit": "Réponse de démonstration. Le vrai copilote (Claude API) sera branché par le flux 2.",
     },
     "en": {
-        "low": "Drought risk is low on your field.",
-        "moderate": "Drought risk is moderate: act carefully.",
-        "high": "Drought risk is high on your field.",
-        "enough_water": "Based on the data, there is enough water to plant.",
-        "risky": "Water is tight; consider lowering density or choosing a more resilient crop.",
-        "not_enough_water": "There isn't enough water now; better wait or switch crop/rotation.",
-        "tail": "This answer relies on NASA data (GPM, SMAP, MODIS, POWER) and agronomic rules. It is an estimate with limits: always check with your local experience and cooperative.",
-        "limit": "Demo answer. The real copilot (Claude API) will be integrated by Flux 2.",
+        "ack": "Good question.",
+        "risk": {"low": "Drought risk is low.", "moderate": "Drought risk is moderate.", "high": "Drought risk is high."},
+        "the_crop": "your crop",
+        "water_head": "On water: you have {avail} mm available and {crop} needs {need} mm.",
+        "w_enough": "That's enough to plant.",
+        "w_risky": "It's tight — lower density or pick a less thirsty crop.",
+        "w_not": "You're short {deficit} mm: better wait for rain or switch crop.",
+        "timing": {"plant_now": "You can plant now.", "wait": "Better wait.", "switch_crop": "Rather switch crop or rotation."},
+        "timing_window": "Recommended window: {window}.",
+        "rotation": "The safest rotation here: {rot0}. It saves water and protects the soil.",
+        "irrigation": "Without irrigation, everything depends on rain and soil moisture. {wline} Beans or sorghum need less water than maize.",
+        "tail": "(NASA data: GPM, SMAP, MODIS, POWER. Estimate with limits — confirm with your cooperative.)",
+        "limit": "Demo answer. The real copilot (Claude API) will be wired by Flux 2.",
     },
     "it": {
-        "low": "Il rischio di siccità è basso sul tuo campo.",
-        "moderate": "Il rischio di siccità è moderato: agisci con prudenza.",
-        "high": "Il rischio di siccità è alto sul tuo campo.",
-        "enough_water": "Secondo i dati, c'è abbastanza acqua per seminare.",
-        "risky": "L'acqua è al limite; valuta di ridurre la densità o scegliere una coltura più resistente.",
-        "not_enough_water": "Non c'è abbastanza acqua ora; meglio aspettare o cambiare coltura/rotazione.",
-        "tail": "Questa risposta si basa su dati NASA (GPM, SMAP, MODIS, POWER) e regole agronomiche. È una stima con dei limiti: verifica sempre con la tua esperienza locale e la cooperativa.",
-        "limit": "Risposta dimostrativa. Il vero copilota (Claude API) sarà integrato dal Flux 2.",
+        "ack": "Buona domanda.",
+        "risk": {"low": "Il rischio di siccità è basso.", "moderate": "Il rischio di siccità è moderato.", "high": "Il rischio di siccità è alto."},
+        "the_crop": "la tua coltura",
+        "water_head": "Sull'acqua: hai {avail} mm disponibili e {crop} ha bisogno di {need} mm.",
+        "w_enough": "È sufficiente per seminare.",
+        "w_risky": "È al limite — riduci la densità o scegli una coltura meno esigente.",
+        "w_not": "Mancano {deficit} mm: meglio aspettare la pioggia o cambiare coltura.",
+        "timing": {"plant_now": "Puoi seminare ora.", "wait": "Meglio aspettare.", "switch_crop": "Meglio cambiare coltura o rotazione."},
+        "timing_window": "Finestra consigliata: {window}.",
+        "rotation": "La rotazione più sicura qui: {rot0}. Risparmia acqua e protegge il suolo.",
+        "irrigation": "Senza irrigazione, tutto dipende da pioggia e umidità del suolo. {wline} Fagioli o sorgo richiedono meno acqua del mais.",
+        "tail": "(Dati NASA: GPM, SMAP, MODIS, POWER. Stima con limiti — verifica con la cooperativa.)",
+        "limit": "Risposta dimostrativa. Il vero copilota (Claude API) sarà collegato dal Flux 2.",
     },
 }
+
+
+def _topic(q: str) -> str:
+    q = (q or "").lower()
+    for topic, kws in INTENT_KW.items():
+        if any(k in q for k in kws):
+            return topic
+    return "generic"
 
 
 def copilot_answer(question: str, context: dict[str, Any] | None, lang: str = "fr") -> dict[str, Any]:
     lang = _L(lang)
     C = COPILOT[lang]
     ctx = context or {}
+    wb = ctx.get("water_budget") or {}
+    pt = ctx.get("planting_timeline") or {}
+    rots = ctx.get("rotations") or []
     risk = ctx.get("risk_level", "moderate")
-    status = (ctx.get("water_budget") or {}).get("status", "risky")
-    answer = f"{C.get(risk, C['moderate'])} {C.get(status, '')} {C['tail']}"
+    status = wb.get("status", "risky")
+    avail, need, deficit = wb.get("available_water_mm", "?"), wb.get("crop_water_need_mm", "?"), wb.get("deficit_mm", "?")
+
+    wline = (C["w_enough"] if status == "enough_water"
+             else C["w_risky"] if status == "risky"
+             else C["w_not"].format(deficit=deficit))
+
+    topic = _topic(question)
+    parts = [C["ack"]]
+    if topic == "water":
+        parts += [C["water_head"].format(avail=avail, need=need, crop=C["the_crop"]), wline]
+    elif topic == "timing":
+        parts.append(C["timing"].get(pt.get("recommendation", "wait"), C["timing"]["wait"]))
+        if pt.get("best_window"):
+            parts.append(C["timing_window"].format(window=pt["best_window"]))
+    elif topic == "rotation":
+        parts.append(C["rotation"].format(rot0=rots[0]["name"] if rots else "—"))
+    elif topic == "irrigation":
+        parts.append(C["irrigation"].format(wline=wline))
+    else:
+        parts += [C["risk"].get(risk, C["risk"]["moderate"]), wline]
+    parts.append(C["tail"])
+
     return {
-        "answer": answer,
+        "answer": " ".join(parts),
         "sources": ["GPM IMERG", "SMAP", "MODIS/VIIRS", "NASA POWER"],
         "limitations": C["limit"],
+        "_mock": True,
+    }
+
+
+# --- Backtesting (mock) : « l'outil aurait-il prévenu ? » ------------------
+BT_SEASONS = [("2015–2016", "El Niño"), ("2018–2019", "—"), ("2019–2020", "—"), ("2023–2024", "El Niño")]
+BT_TXT = {
+    "fr": {
+        "alert": {"low": "Pas d'alerte", "moderate": "Alerte modérée", "high": "Alerte sécheresse"},
+        "warned": "Prévenu avant la fenêtre de semis",
+        "missed": "Conditions normales",
+        "summary": "Field Shift aurait prévenu lors de {n} saisons sèches sur {m} avant la fenêtre de semis.",
+    },
+    "en": {
+        "alert": {"low": "No alert", "moderate": "Moderate alert", "high": "Drought alert"},
+        "warned": "Warned before the planting window",
+        "missed": "Normal conditions",
+        "summary": "Field Shift would have warned in {n} of {m} dry seasons before the planting window.",
+    },
+    "it": {
+        "alert": {"low": "Nessun allarme", "moderate": "Allarme moderato", "high": "Allarme siccità"},
+        "warned": "Avvisato prima della finestra di semina",
+        "missed": "Condizioni normali",
+        "summary": "Field Shift avrebbe avvisato in {n} stagioni secche su {m} prima della finestra di semina.",
+    },
+}
+
+
+def backtesting(payload: dict[str, Any]) -> dict[str, Any]:
+    lang = _L(str(payload.get("lang", "fr")))
+    T = BT_TXT[lang]
+    lat = float(payload.get("latitude", 14.8))
+    lon = float(payload.get("longitude", -90.5))
+    base = _seed(lat, lon)
+
+    seasons, warned = [], 0
+    for i, (name, tag) in enumerate(BT_SEASONS):
+        s = (base + i * 0.17) % 1.0
+        el_nino = tag == "El Niño"
+        rainfall_pct = round((45 if el_nino else 70) + s * 25)       # % du normal
+        risk_score = int(max(5, min(98, (80 if el_nino else 45) + (0.7 - rainfall_pct / 100) * 60 - s * 15)))
+        level = _risk_level(risk_score)
+        did_warn = risk_score >= 50
+        if did_warn:
+            warned += 1
+        seasons.append({
+            "season": name, "tag": tag, "rainfall_pct": rainfall_pct,
+            "risk_score": risk_score, "risk_level": level,
+            "alert": T["alert"][level],
+            "outcome": T["warned"] if did_warn else T["missed"],
+            "warned": did_warn,
+        })
+
+    dry_total = sum(1 for x in seasons if x["risk_score"] >= 50 or x["tag"] == "El Niño")
+    return {
+        "seasons": seasons,
+        "warned_count": warned,
+        "total": len(seasons),
+        "summary": T["summary"].format(n=warned, m=max(1, dry_total)),
         "_mock": True,
     }
