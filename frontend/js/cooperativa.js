@@ -1,7 +1,7 @@
 /* Field Shift — carte coopérative (résumé imprimable + QR). */
 (function () {
   const t = (k) => FSI18N.t(k);
-  const RISK_COLOR = { low: "#16A34A", moderate: "#F59E0B", high: "#DC2626" };
+  const RISK_COLOR = { low: "#3F9D22", moderate: "#E5A12A", high: "#D6462B" };
   const ACT = { plant_now: "coop.act_plant", wait: "coop.act_wait", switch_crop: "coop.act_switch" };
 
   function render() {

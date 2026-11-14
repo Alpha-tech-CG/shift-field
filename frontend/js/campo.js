@@ -1,22 +1,55 @@
 /* Field Shift — sélection de la parcelle : point OU polygone (+ surface). */
 (function () {
+  const t = (k) => FSI18N.t(k);
   const DEFAULT = { lat: 14.8, lon: -90.5 };
   const saved = FSStore.getField();
   const start = saved ? { lat: saved.latitude, lon: saved.longitude } : DEFAULT;
 
-  const map = L.map("map").setView([start.lat, start.lon], saved ? 12 : 7);
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    maxZoom: 18, attribution: "© OpenStreetMap",
-  }).addTo(map);
+  // Textes des outils de dessin (Leaflet.draw) dans la langue courante.
+  const DRAW_TXT = {
+    fr: { polygon: "Dessiner la parcelle", marker: "Poser un point", start: "Clique pour commencer le contour.", cont: "Clique pour continuer le contour.", end: "Clique sur le premier point pour fermer.", point: "Clique sur la carte pour poser le point.", finish: "Terminer", cancel: "Annuler", undo: "Effacer le dernier point", remove: "Supprimer" },
+    en: { polygon: "Draw the field", marker: "Drop a point", start: "Click to start drawing the boundary.", cont: "Click to continue the boundary.", end: "Click the first point to close.", point: "Click the map to drop the point.", finish: "Finish", cancel: "Cancel", undo: "Delete last point", remove: "Delete" },
+    it: { polygon: "Disegna il campo", marker: "Posiziona un punto", start: "Clicca per iniziare il contorno.", cont: "Clicca per continuare il contorno.", end: "Clicca sul primo punto per chiudere.", point: "Clicca sulla mappa per posizionare il punto.", finish: "Fine", cancel: "Annulla", undo: "Elimina l'ultimo punto", remove: "Elimina" },
+  };
+  function localizeDraw() {
+    const x = DRAW_TXT[FSI18N.lang] || DRAW_TXT.fr, d = L.drawLocal.draw;
+    d.toolbar.buttons.polygon = x.polygon;
+    d.toolbar.buttons.marker = x.marker;
+    d.toolbar.actions.text = x.cancel; d.toolbar.actions.title = x.cancel;
+    d.toolbar.finish.text = x.finish; d.toolbar.finish.title = x.finish;
+    d.toolbar.undo.text = x.undo; d.toolbar.undo.title = x.undo;
+    d.handlers.polygon.tooltip = { start: x.start, cont: x.cont, end: x.end };
+    d.handlers.marker.tooltip.start = x.point;
+    L.drawLocal.edit.toolbar.buttons.remove = x.remove;
+  }
+  localizeDraw();
+
+  const map = L.map("map").setView([start.lat, start.lon], saved ? 15 : 7);
+  const BASES = {
+    plan: L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "© OpenStreetMap" }),
+    sat: L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", { maxZoom: 19, attribution: "Imagery © Esri" }),
+  };
+  let base = "sat";
+  BASES.sat.addTo(map);
+  document.querySelectorAll("#base-seg button").forEach((b) => b.addEventListener("click", () => {
+    map.removeLayer(BASES[base]);
+    base = b.dataset.base;
+    BASES[base].addTo(map);
+    document.querySelectorAll("#base-seg button").forEach((x) => x.classList.toggle("is-active", x === b));
+  }));
 
   const drawn = new L.FeatureGroup().addTo(map);
   const coordsEl = document.getElementById("coords");
   const areaEl = document.getElementById("area");
   let pointMarker = null;
 
+  // Le libellé « aucune parcelle » est traduit ; une fois une parcelle choisie,
+  // on retire data-i18n pour que le changement de langue ne l'efface pas.
+  function setCoords(text) { coordsEl.removeAttribute("data-i18n"); coordsEl.textContent = text; }
+  function clearCoords() { coordsEl.setAttribute("data-i18n", "field.none"); coordsEl.textContent = t("field.none"); }
   function showArea(ha) {
     if (ha == null) { areaEl.classList.add("hidden"); return; }
-    areaEl.textContent = FSI18N.t("field.area") + " : " + ha.toFixed(2) + " ha";
+    areaEl.textContent = `${t("field.area")} : ${Number(ha).toFixed(2)} ha`;
     areaEl.classList.remove("hidden");
   }
 
@@ -29,7 +62,7 @@
     } else {
       pointMarker.setLatLng([la, lo]);
     }
-    coordsEl.textContent = `${la}, ${lo}`;
+    setCoords(`${la}, ${lo}`);
     showArea(null);
     FSStore.setField({ latitude: la, longitude: lo, area_ha: null, polygon: null });
   }
@@ -39,43 +72,50 @@
     const latlngs = layer.getLatLngs()[0];
     const c = layer.getBounds().getCenter();
     const ha = L.GeometryUtil.geodesicArea(latlngs) / 10000;
-    coordsEl.textContent = `${c.lat.toFixed(4)}, ${c.lng.toFixed(4)}`;
+    setCoords(`${c.lat.toFixed(4)}, ${c.lng.toFixed(4)}`);
     showArea(ha);
     FSStore.setField({
-      latitude: +c.lat.toFixed(4), longitude: +c.lng.toFixed(4),
-      area_ha: +ha.toFixed(2),
+      latitude: +c.lat.toFixed(4), longitude: +c.lng.toFixed(4), area_ha: +ha.toFixed(2),
       polygon: latlngs.map((p) => [+p.lat.toFixed(5), +p.lng.toFixed(5)]),
     });
   }
 
-  // Outils de dessin (polygone + point).
   map.addControl(new L.Control.Draw({
     position: "topleft",
-    draw: { polygon: { shapeOptions: { color: "#2563EB" } }, marker: true,
+    draw: { polygon: { shapeOptions: { color: "#F2CE60", weight: 3 } }, marker: true,
       polyline: false, rectangle: false, circle: false, circlemarker: false },
     edit: { featureGroup: drawn, edit: false, remove: true },
   }));
 
+  let drawing = false;
+  map.on(L.Draw.Event.DRAWSTART, () => { drawing = true; });
+  map.on(L.Draw.Event.DRAWSTOP, () => { setTimeout(() => { drawing = false; }, 50); });
   map.on(L.Draw.Event.CREATED, (e) => {
     if (e.layerType === "polygon") { drawn.clearLayers(); drawn.addLayer(e.layer); savePolygon(e.layer); }
     else { const p = e.layer.getLatLng(); savePoint(p.lat, p.lng); }
   });
-  map.on(L.Draw.Event.DELETED, () => { FSStore.setField(null); coordsEl.textContent = FSI18N.t("field.none"); showArea(null); });
+  map.on(L.Draw.Event.DELETED, () => {
+    if (pointMarker) { map.removeLayer(pointMarker); pointMarker = null; }
+    FSStore.setField(null); clearCoords(); showArea(null);
+  });
 
-  // Clic simple = poser/déplacer un point (sélection rapide).
-  map.on("click", (e) => savePoint(e.latlng.lat, e.latlng.lng));
+  // Clic simple (hors dessin) = poser/déplacer un point.
+  map.on("click", (e) => { if (!drawing) savePoint(e.latlng.lat, e.latlng.lng); });
 
-  // Restauration de ce qui était enregistré.
+  // Restauration
   if (saved && saved.polygon && saved.polygon.length) {
-    const poly = L.polygon(saved.polygon.map((p) => L.latLng(p[0], p[1])), { color: "#2563EB" });
+    const poly = L.polygon(saved.polygon.map((p) => L.latLng(p[0], p[1])), { color: "#F2CE60", weight: 3 });
     drawn.addLayer(poly);
-    coordsEl.textContent = `${saved.latitude}, ${saved.longitude}`;
+    map.fitBounds(poly.getBounds(), { padding: [30, 30] });
+    setCoords(`${saved.latitude}, ${saved.longitude}`);
     showArea(saved.area_ha);
   } else if (saved) {
     savePoint(saved.latitude, saved.longitude);
   }
 
   document.addEventListener("fs:langchange", () => {
-    if (saved && saved.area_ha != null) showArea(FSStore.getField() ? FSStore.getField().area_ha : null);
+    localizeDraw();
+    const f = FSStore.getField();
+    showArea(f ? f.area_ha : null);
   });
 })();

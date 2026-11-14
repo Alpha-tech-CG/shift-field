@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#DEDEDA" />
+  <title>Field Shift — Analyse du terrain</title>
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="icon" href="/icons/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="/css/fieldshift.css" />
+  <script src="https://code.iconify.design/iconify-icon/3.0.0/iconify-icon.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
+</head>
+<body data-page="analyse" class="page-analyse">
+  <div class="frame">
+    <header id="topbar"></header>
+
+    <div id="loading" class="loading"><div class="spinner"></div><p data-i18n="common.loading"></p></div>
+
+    <main id="content" class="hidden">
+      <div class="analyse-grid">
+        <!-- Gauche : titre + scan satellite -->
+        <section class="analyse-left">
+          <div class="thumbs">
+            <a class="thumb is-active" href="/campo.html" aria-label="Parcelle"><img src="/img/field-thumb.jpg" alt="" /></a>
+            <a class="thumb-add" href="/campo.html"><span>＋<br /><span data-i18n="an.add"></span></span></a>
+          </div>
+          <div>
+            <h1 class="an-title" id="an-title"></h1>
+            <p class="an-sub" id="an-sub"></p>
+            <div class="scan is-scanning" id="scan">
+              <div class="scan-ring"></div>
+              <div class="scan-map" id="scan-map"></div>
+              <div class="scan-band"></div>
+              <div class="callout c1"><span data-i18n="callout.ndvi"></span><b id="co-ndvi"></b></div>
+              <div class="callout c2"><span data-i18n="callout.soil"></span><b id="co-soil"></b></div>
+            </div>
+            <div class="scan-frame"><i></i><i></i><i></i><i></i><span id="scan-state"></span></div>
+            <div style="text-align:center;margin-top:16px">
+              <div class="seg" id="layer-seg">
+                <button data-layer="sat" class="is-active" data-i18n="an.layer_sat"></button>
+                <button data-layer="ndvi" data-i18n="an.layer_ndvi"></button>
+              </div>
+              <p class="layer-note" id="layer-note"></p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Droite : cartes -->
+        <section class="analyse-right">
+          <div class="card glass">
+            <div class="card-head">
+              <h2 class="card-title" data-i18n="ins.title"></h2>
+              <a class="link-under" href="/plan.html" data-i18n="common.see_all"></a>
+            </div>
+            <div class="health-grid" id="health"></div>
+          </div>
+
+          <div class="card growth" style="position:relative">
+            <div class="card-head" style="margin-bottom:6px">
+              <h2 class="card-title" data-i18n="an.growth"></h2>
+              <span class="small" data-i18n="an.weeks8"></span>
+            </div>
+            <div class="chart-box" style="height:150px"><canvas id="growth-chart"></canvas><span class="delta hidden" id="growth-delta"></span></div>
+          </div>
+
+          <div class="card glass">
+            <div class="card-head">
+              <div><h2 class="card-title" data-i18n="an.voice"></h2><p class="card-sub" data-i18n="an.voice_sub"></p></div>
+              <button class="round-btn" id="voice-play" aria-label="Play"><iconify-icon id="voice-icon" icon="solar:play-bold" width="18" height="18"></iconify-icon></button>
+            </div>
+            <div class="voice-box" id="voice-box">
+              <div class="wave" id="wave"></div>
+              <div class="voice-foot">
+                <span style="display:flex;align-items:center;gap:14px">
+                  <button id="voice-stop" aria-label="Stop"><iconify-icon icon="solar:trash-bin-minimalistic-linear" width="18" height="18"></iconify-icon></button>
+                  <button id="voice-speed" class="bold">1x</button>
+                </span>
+                <span class="bold" id="voice-dur">0:00</span>
+              </div>
+            </div>
+            <p class="xs faint hidden" id="voice-na" data-i18n="an.voice_na" style="margin-top:8px"></p>
+          </div>
+
+          <a class="card expert" href="/copiloto.html">
+            <img src="/img/assistant.jpg" alt="" />
+            <div class="ex-top">
+              <h2 class="card-title" data-i18n="an.expert"></h2>
+              <p class="card-sub" data-i18n="an.expert_sub"></p>
+            </div>
+            <span class="round-btn"><iconify-icon icon="solar:alt-arrow-right-linear" width="18" height="18"></iconify-icon></span>
+          </a>
+
+          <div class="card glass updates span-2" id="alerts">
+            <div class="card-head">
+              <h2 class="card-title" data-i18n="an.updates"></h2>
+              <a class="link-under" href="/plan.html#why" data-i18n="common.see_all"></a>
+            </div>
+            <div id="upd-list"></div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="/js/i18n.js"></script>
+  <script src="/js/store.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/pwa.js"></script>
+  <script src="/js/layout.js"></script>
+  <script src="/js/analyse.js"></script>
+</body>
+</html>

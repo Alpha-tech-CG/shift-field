@@ -1,17 +1,25 @@
 /* Field Shift — service worker.
-   Estrategia:
-   - App shell (HTML/CSS/JS/íconos): cache-first con respaldo de red.
-   - API (/api/*): network-first (la app usa su propia caché en localStorage).
-   Así la PWA abre y muestra los últimos datos aunque no haya conexión. */
-const CACHE = "field-shift-v5";
+   - App shell (pages, CSS, JS, images) : pré-cache, cache d'abord.
+   - Librairies CDN (Chart.js, Leaflet, Iconify, polices) : stale-while-revalidate,
+     pour que l'appli reste utilisable hors-ligne.
+   - API et tuiles de carte : réseau (l'appli garde sa dernière reco en localStorage). */
+const CACHE = "field-shift-v6";
+const RUNTIME = "field-shift-rt-v6";
 const SHELL = [
-  "/", "/index.html", "/campo.html", "/perfil.html", "/panel.html",
+  "/", "/index.html", "/campo.html", "/perfil.html", "/panel.html", "/analyse.html", "/plan.html",
   "/copiloto.html", "/cooperativa.html", "/backtesting.html",
-  "/css/app.css",
-  "/js/i18n.js", "/js/store.js", "/js/api.js", "/js/pwa.js",
-  "/js/campo.js", "/js/perfil.js", "/js/panel.js", "/js/copiloto.js", "/js/cooperativa.js", "/js/backtesting.js",
+  "/css/fieldshift.css",
+  "/js/i18n.js", "/js/store.js", "/js/api.js", "/js/pwa.js", "/js/layout.js",
+  "/js/campo.js", "/js/perfil.js", "/js/panel.js", "/js/analyse.js", "/js/plan.js",
+  "/js/copiloto.js", "/js/cooperativa.js", "/js/backtesting.js",
   "/manifest.webmanifest",
   "/icons/icon.svg", "/icons/icon-192.png", "/icons/icon-512.png", "/icons/icon-maskable-512.png",
+  "/img/field.jpg", "/img/field-thumb.jpg", "/img/assistant.jpg",
+];
+const LIB_HOSTS = [
+  "cdn.jsdelivr.net", "unpkg.com", "cdnjs.cloudflare.com", "code.iconify.design",
+  "api.iconify.design", "api.simplesvg.com", "api.unisvg.com",
+  "fonts.googleapis.com", "fonts.gstatic.com",
 ];
 
 self.addEventListener("install", (e) => {
@@ -20,28 +28,39 @@ self.addEventListener("install", (e) => {
 
 self.addEventListener("activate", (e) => {
   e.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)))
-    ).then(() => self.clients.claim())
+    caches.keys()
+      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE && k !== RUNTIME).map((k) => caches.delete(k))))
+      .then(() => self.clients.claim())
   );
 });
 
 self.addEventListener("fetch", (e) => {
-  const url = new URL(e.request.url);
-  if (e.request.method !== "GET") return; // no cachear POST (/api/*)
+  const req = e.request;
+  if (req.method !== "GET") return;
+  const url = new URL(req.url);
 
-  if (url.pathname.startsWith("/api/")) {
-    e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
+  if (url.origin === self.location.origin) {
+    if (url.pathname.startsWith("/api/")) {
+      e.respondWith(fetch(req).catch(() => caches.match(req)));
+      return;
+    }
+    e.respondWith(
+      caches.match(req, { ignoreSearch: true }).then((hit) => hit || fetch(req).then((res) => {
+        const copy = res.clone();
+        caches.open(CACHE).then((c) => c.put(req, copy)).catch(() => {});
+        return res;
+      }).catch(() => (req.mode === "navigate" ? caches.match("/index.html") : undefined)))
+    );
     return;
   }
 
-  e.respondWith(
-    caches.match(e.request).then((cached) =>
-      cached || fetch(e.request).then((res) => {
-        const copy = res.clone();
-        caches.open(CACHE).then((c) => c.put(e.request, copy)).catch(() => {});
-        return res;
-      }).catch(() => caches.match("/index.html"))
-    )
-  );
+  if (LIB_HOSTS.includes(url.hostname)) {
+    e.respondWith(
+      caches.open(RUNTIME).then((c) => c.match(req).then((hit) => {
+        const net = fetch(req).then((res) => { c.put(req, res.clone()).catch(() => {}); return res; }).catch(() => hit);
+        return hit || net;
+      }))
+    );
+  }
+  // Tout le reste (tuiles de carte…) : réseau normal, non mis en cache.
 });

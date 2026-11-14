@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#2563EB" />
+  <meta name="theme-color" content="#DEDEDA" />
   <title>Field Shift — Profil</title>
   <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="icon" href="/icons/icon.svg" type="image/svg+xml" />
@@ -12,124 +12,68 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/fieldshift.css" />
   <script src="https://code.iconify.design/iconify-icon/3.0.0/iconify-icon.min.js"></script>
-  <style type="text/tailwindcss">
-    @theme inline {
-      --color-background: var(--background); --color-foreground: var(--foreground);
-      --color-primary: var(--primary); --color-primary-foreground: var(--primary-foreground);
-      --color-secondary: var(--secondary); --color-secondary-foreground: var(--secondary-foreground);
-      --color-muted: var(--muted); --color-muted-foreground: var(--muted-foreground);
-      --color-accent: var(--accent); --color-accent-foreground: var(--accent-foreground);
-      --color-destructive: var(--destructive);
-      --color-card: var(--card); --color-card-foreground: var(--card-foreground);
-      --color-border: var(--border); --color-input: var(--input); --color-ring: var(--ring);
-      --color-chart-1: var(--chart-1); --color-chart-2: var(--chart-2); --color-chart-3: var(--chart-3);
-      --color-chart-4: var(--chart-4); --color-chart-5: var(--chart-5);
-      --font-sans: var(--font-sans); --font-heading: var(--font-heading, var(--font-sans));
-      --radius-2xl: calc(var(--radius) + 8px); --radius-3xl: calc(var(--radius) + 16px);
-    }
-    @layer base { body { @apply bg-background text-foreground font-sans; } }
-    :root {
-      --shape: squircle;
-      --background:#F8FAFC; --foreground:#0F172A;
-      --primary:#2563EB; --primary-foreground:#FFFFFF;
-      --secondary:#14B8A6; --secondary-foreground:#FFFFFF;
-      --muted:#E2E8F0; --muted-foreground:#64748B;
-      --accent:#F59E0B; --accent-foreground:#172554;
-      --destructive:#DC2626;
-      --card:#FFFFFF; --card-foreground:#0F172A;
-      --border:#E2E8F0; --input:#F1F5F9; --ring:#2563EB;
-      --chart-1:#2563EB; --chart-2:#14B8A6; --chart-3:#F59E0B; --chart-4:#16A34A; --chart-5:#8B5CF6;
-      --font-sans:"Inter",sans-serif; --font-heading:"Manrope",sans-serif;
-      --radius:0.75rem;
-    }
-    * { corner-shape: var(--shape, round); }
-    iconify-icon:not([width]):not([height]) { display:inline-block; width:1em; height:1em; }
-    *,*::before,*::after { scrollbar-width:none; -ms-overflow-style:none; }
-    *::-webkit-scrollbar { display:none; }
-  </style>
-  <link rel="stylesheet" href="/css/app.css" />
 </head>
-<body>
-  <div id="offline-banner" data-i18n="common.offline"></div>
-  <div class="mx-auto max-w-md min-h-screen bg-background pb-36 font-sans text-foreground">
-    <header class="flex items-center justify-between px-6 pt-8 pb-5">
-      <h1 class="font-heading text-3xl font-bold leading-tight" data-i18n="profile.title"></h1>
-      <button data-lang-label onclick="FSI18N.cycle()"
-        class="size-11 rounded-2xl bg-card border border-border text-sm font-semibold"></button>
-    </header>
+<body data-page="profile">
+  <div class="frame">
+    <header id="topbar"></header>
 
-    <main class="px-6 space-y-6">
-      <section>
-        <p class="text-base font-semibold mb-3" data-i18n="profile.crop"></p>
-        <div id="crop-grid" class="grid grid-cols-3 gap-2">
-          <button type="button" data-crop="maize" class="crop-btn flex h-20 flex-col items-center justify-center gap-1 rounded-2xl border border-border bg-card">
-            <iconify-icon icon="mdi:corn" width="26" height="26"></iconify-icon><span class="text-sm font-medium" data-i18n="crop.maize"></span></button>
-          <button type="button" data-crop="beans" class="crop-btn flex h-20 flex-col items-center justify-center gap-1 rounded-2xl border border-border bg-card">
-            <iconify-icon icon="mdi:seed-outline" width="26" height="26"></iconify-icon><span class="text-sm font-medium" data-i18n="crop.beans"></span></button>
-          <button type="button" data-crop="sorghum" class="crop-btn flex h-20 flex-col items-center justify-center gap-1 rounded-2xl border border-border bg-card">
-            <iconify-icon icon="mdi:grass" width="26" height="26"></iconify-icon><span class="text-sm font-medium" data-i18n="crop.sorghum"></span></button>
-          <button type="button" data-crop="millet" class="crop-btn flex h-20 flex-col items-center justify-center gap-1 rounded-2xl border border-border bg-card">
-            <iconify-icon icon="mdi:sprout" width="26" height="26"></iconify-icon><span class="text-sm font-medium" data-i18n="crop.millet"></span></button>
-          <button type="button" data-crop="cover_crop" class="crop-btn flex h-20 flex-col items-center justify-center gap-1 rounded-2xl border border-border bg-card">
-            <iconify-icon icon="solar:leaf-linear" width="26" height="26"></iconify-icon><span class="text-sm font-medium" data-i18n="crop.cover_crop"></span></button>
-        </div>
-      </section>
-
-      <section>
-        <p class="text-base font-semibold mb-3" data-i18n="profile.soil"></p>
-        <select id="soil" class="w-full h-14 rounded-2xl border border-border bg-input px-4 text-base font-medium">
-          <option value="sandy" data-i18n="soil.sandy"></option>
-          <option value="sandy_loam" selected data-i18n="soil.sandy_loam"></option>
-          <option value="loam" data-i18n="soil.loam"></option>
-          <option value="clay_loam" data-i18n="soil.clay_loam"></option>
-          <option value="clay" data-i18n="soil.clay"></option>
-        </select>
-      </section>
-
-      <section>
-        <p class="text-base font-semibold mb-3" data-i18n="profile.irrigation"></p>
-        <div class="grid grid-cols-2 gap-2">
-          <button type="button" data-irr="false" class="irr-btn h-14 rounded-2xl border border-border bg-card text-base font-semibold" data-i18n="profile.irrigation.no"></button>
-          <button type="button" data-irr="true" class="irr-btn h-14 rounded-2xl border border-border bg-card text-base font-semibold" data-i18n="profile.irrigation.yes"></button>
-        </div>
-      </section>
-
-      <section>
-        <p class="text-base font-semibold mb-3" data-i18n="profile.priority"></p>
-        <select id="priority" class="w-full h-14 rounded-2xl border border-border bg-input px-4 text-base font-medium">
-          <option value="save_water" data-i18n="profile.prio.water"></option>
-          <option value="balanced" selected data-i18n="profile.prio.balanced"></option>
-          <option value="max_yield" data-i18n="profile.prio.yield"></option>
-        </select>
-      </section>
-    </main>
-
-    <div class="fixed bottom-20 inset-x-0 mx-auto max-w-md px-6">
-      <button id="submit-btn"
-        class="h-14 w-full rounded-2xl bg-primary text-primary-foreground text-base font-semibold shadow-sm" data-i18n="profile.submit"></button>
+    <div class="page-head" style="max-width:900px;margin-left:auto;margin-right:auto">
+      <div><h1 data-i18n="profile.title"></h1><p class="sub" data-i18n="profile.sub"></p></div>
     </div>
 
-    <nav class="fixed bottom-0 inset-x-0 mx-auto max-w-md bg-card border-t border-border grid grid-cols-5 px-2 pt-2 pb-4">
-      <a href="/index.html" class="flex flex-col items-center gap-1 text-sm font-medium text-muted-foreground">
-        <span class="flex h-9 w-16 items-center justify-center"><iconify-icon icon="solar:home-2-linear" width="26" height="26"></iconify-icon></span><span data-i18n="nav.home"></span></a>
-      <a href="/campo.html" class="flex flex-col items-center gap-1 text-sm font-medium text-muted-foreground">
-        <span class="flex h-9 w-16 items-center justify-center"><iconify-icon icon="solar:map-point-linear" width="26" height="26"></iconify-icon></span><span data-i18n="nav.map"></span></a>
-      <a href="/panel.html" class="flex flex-col items-center gap-1 text-sm font-medium text-muted-foreground">
-        <span class="flex h-9 w-16 items-center justify-center"><iconify-icon icon="mdi:plant" width="26" height="26"></iconify-icon></span><span data-i18n="nav.plan"></span></a>
-      <a href="/copiloto.html" class="flex flex-col items-center gap-1 text-sm font-medium text-muted-foreground">
-        <span class="flex h-9 w-16 items-center justify-center"><iconify-icon icon="solar:chat-round-dots-linear" width="26" height="26"></iconify-icon></span><span data-i18n="nav.assistant"></span></a>
-      <a href="/perfil.html" class="flex flex-col items-center gap-1 text-sm font-semibold text-primary">
-        <span class="flex h-9 w-16 items-center justify-center rounded-full bg-primary/10"><iconify-icon icon="solar:user-circle-linear" width="26" height="26"></iconify-icon></span><span data-i18n="nav.profile"></span></a>
-    </nav>
+    <section class="card stack" style="max-width:900px;margin:0 auto;gap:28px">
+      <div>
+        <span class="field-label" data-i18n="profile.crop"></span>
+        <div class="choice-grid">
+          <button type="button" class="choice crop-btn" data-crop="maize"><span class="h-ico"><iconify-icon icon="mdi:corn" width="24" height="24"></iconify-icon></span><span data-i18n="crop.maize"></span></button>
+          <button type="button" class="choice crop-btn" data-crop="beans"><span class="h-ico"><iconify-icon icon="mdi:seed-outline" width="24" height="24"></iconify-icon></span><span data-i18n="crop.beans"></span></button>
+          <button type="button" class="choice crop-btn" data-crop="sorghum"><span class="h-ico"><iconify-icon icon="mdi:grass" width="24" height="24"></iconify-icon></span><span data-i18n="crop.sorghum"></span></button>
+          <button type="button" class="choice crop-btn" data-crop="millet"><span class="h-ico"><iconify-icon icon="mdi:sprout" width="24" height="24"></iconify-icon></span><span data-i18n="crop.millet"></span></button>
+          <button type="button" class="choice crop-btn" data-crop="cover_crop"><span class="h-ico"><iconify-icon icon="solar:leaf-bold" width="24" height="24"></iconify-icon></span><span data-i18n="crop.cover_crop"></span></button>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div>
+          <span class="field-label" data-i18n="profile.soil"></span>
+          <select id="soil" class="select">
+            <option value="sandy" data-i18n="soil.sandy"></option>
+            <option value="sandy_loam" selected data-i18n="soil.sandy_loam"></option>
+            <option value="loam" data-i18n="soil.loam"></option>
+            <option value="clay_loam" data-i18n="soil.clay_loam"></option>
+            <option value="clay" data-i18n="soil.clay"></option>
+          </select>
+        </div>
+        <div>
+          <span class="field-label" data-i18n="profile.irrigation"></span>
+          <div class="pills">
+            <button type="button" class="pill-opt irr-btn" data-irr="false" data-i18n="profile.irrigation.no"></button>
+            <button type="button" class="pill-opt irr-btn" data-irr="true" data-i18n="profile.irrigation.yes"></button>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <span class="field-label" data-i18n="profile.priority"></span>
+        <div class="pills">
+          <button type="button" class="pill-opt prio-btn" data-prio="save_water" data-i18n="profile.prio.water"></button>
+          <button type="button" class="pill-opt prio-btn" data-prio="balanced" data-i18n="profile.prio.balanced"></button>
+          <button type="button" class="pill-opt prio-btn" data-prio="max_yield" data-i18n="profile.prio.yield"></button>
+        </div>
+      </div>
+
+      <button id="submit-btn" class="btn btn-dark btn-block" data-i18n="profile.submit"></button>
+    </section>
   </div>
 
   <script src="/js/i18n.js"></script>
   <script src="/js/store.js"></script>
   <script src="/js/api.js"></script>
   <script src="/js/pwa.js"></script>
+  <script src="/js/layout.js"></script>
   <script src="/js/perfil.js"></script>
 </body>
 </html>
