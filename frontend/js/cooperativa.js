@@ -1,7 +1,8 @@
-/* Field Shift — tarjeta de cooperativa (resumen imprimible + QR). */
+/* Field Shift — carte coopérative (résumé imprimable + QR). */
 (function () {
   const t = (k) => FSI18N.t(k);
-  const RISK_COLOR = { low: "#2e9e5b", moderate: "#e8870c", high: "#d64545" };
+  const RISK_COLOR = { low: "#16A34A", moderate: "#F59E0B", high: "#DC2626" };
+  const ACT = { plant_now: "coop.act_plant", wait: "coop.act_wait", switch_crop: "coop.act_switch" };
 
   function render() {
     const reco = FSStore.getLastReco();
@@ -11,9 +12,7 @@
       field ? `${field.latitude}, ${field.longitude}` : "—";
 
     if (!reco) {
-      document.getElementById("card").insertAdjacentHTML("afterbegin",
-        `<p class="text-sm text-red-600 mb-2">${FSI18N.lang === "en"
-          ? "No recommendation yet. Open the Panel first." : "Aún no hay recomendación. Abre el Panel primero."}</p>`);
+      document.getElementById("c-water").textContent = t("coop.none");
       return;
     }
 
@@ -31,22 +30,11 @@
     document.getElementById("c-planting").textContent =
       `${t("plant." + pt.recommendation)} · ${pt.best_window || ""}`;
 
-    const actions = {
-      plant_now: FSI18N.lang === "en" ? "Prepare soil and seed within the window."
-        : "Preparar el suelo y sembrar dentro de la ventana.",
-      wait: FSI18N.lang === "en" ? "Wait for rain; conserve soil moisture."
-        : "Esperar la lluvia; conservar la humedad del suelo.",
-      switch_crop: FSI18N.lang === "en" ? "Choose a drought-tolerant crop or rotation."
-        : "Elegir un cultivo o rotación más resistente a la sequía.",
-    };
-    document.getElementById("c-actions").textContent = actions[pt.recommendation] || "";
+    document.getElementById("c-actions").textContent = t(ACT[pt.recommendation] || "coop.act_wait");
 
-    // QR hacia la PWA
     const qr = document.getElementById("qr");
     qr.innerHTML = "";
-    if (window.QRCode) {
-      new QRCode(qr, { text: window.location.origin, width: 72, height: 72 });
-    }
+    if (window.QRCode) new QRCode(qr, { text: window.location.origin, width: 72, height: 72 });
   }
 
   document.addEventListener("fs:langchange", () => {

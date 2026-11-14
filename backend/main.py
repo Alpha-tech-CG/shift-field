@@ -59,6 +59,7 @@ async def copilot(payload: dict) -> JSONResponse:
     result = copilot_answer(
         question=str(payload.get("question", "")),
         context=payload.get("context"),
+        lang=str(payload.get("lang", "fr")),
     )
     return JSONResponse(result)
 
