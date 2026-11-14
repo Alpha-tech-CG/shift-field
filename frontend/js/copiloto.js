@@ -45,4 +45,26 @@
     thinking.textContent = res.answer;
     sources(res.sources);
   });
+
+  // Preguntas sugeridas (chips) — ayudan al agricultor a empezar.
+  const SUGG = {
+    es: ["¿Tengo suficiente agua?", "¿Cuándo debo sembrar?",
+         "¿Qué rotación me conviene?", "No tengo riego, ¿qué hago?"],
+    en: ["Do I have enough water?", "When should I plant?",
+         "Which rotation fits me?", "I have no irrigation, what should I do?"],
+  };
+  function renderChips() {
+    const box = document.getElementById("chips");
+    box.innerHTML = "";
+    (SUGG[FSI18N.lang] || SUGG.es).forEach((q) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "chip-q";
+      b.textContent = q;
+      b.addEventListener("click", () => { input.value = q; form.requestSubmit(); });
+      box.appendChild(b);
+    });
+  }
+  renderChips();
+  document.addEventListener("fs:langchange", renderChips);
 })();

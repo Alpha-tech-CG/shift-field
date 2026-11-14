@@ -3,14 +3,15 @@
    - App shell (HTML/CSS/JS/íconos): cache-first con respaldo de red.
    - API (/api/*): network-first (la app usa su propia caché en localStorage).
    Así la PWA abre y muestra los últimos datos aunque no haya conexión. */
-const CACHE = "field-shift-v1";
+const CACHE = "field-shift-v2";
 const SHELL = [
   "/", "/index.html", "/campo.html", "/perfil.html", "/panel.html",
   "/copiloto.html", "/cooperativa.html",
   "/css/app.css",
   "/js/i18n.js", "/js/store.js", "/js/api.js", "/js/pwa.js",
   "/js/campo.js", "/js/perfil.js", "/js/panel.js", "/js/copiloto.js", "/js/cooperativa.js",
-  "/manifest.webmanifest", "/icons/icon.svg",
+  "/manifest.webmanifest",
+  "/icons/icon.svg", "/icons/icon-192.png", "/icons/icon-512.png", "/icons/icon-maskable-512.png",
 ];
 
 self.addEventListener("install", (e) => {

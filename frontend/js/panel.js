@@ -6,6 +6,28 @@
 
   const RISK_COLOR = { low: "#2e9e5b", moderate: "#e8870c", high: "#d64545" };
 
+  function showError() {
+    const en = FSI18N.lang === "en";
+    document.getElementById("loading").innerHTML =
+      `<p class="text-red-600 mb-3">${en
+        ? "Couldn't get the recommendation. Is the server running?"
+        : "No se pudo obtener la recomendación. ¿Está el servidor encendido?"}</p>
+       <button onclick="location.reload()" class="text-white rounded-xl px-5 py-2 font-semibold"
+         style="background:var(--fs-green)">${en ? "Retry" : "Reintentar"}</button>`;
+  }
+
+  function stamp(offline, mock) {
+    const en = FSI18N.lang === "en";
+    const time = new Date().toLocaleTimeString(en ? "en-US" : "es-ES",
+      { hour: "2-digit", minute: "2-digit" });
+    const flag = document.getElementById("mock-flag");
+    flag.classList.remove("hidden");
+    let html = `<span class="text-xs text-gray-400">${en ? "Updated" : "Actualizado"} ${time}</span>`;
+    if (offline) html += ` · <span class="mock-chip">📴 ${en ? "offline" : "sin conexión"}</span>`;
+    else if (mock) html += ` · <span class="mock-chip">⚙️ ${en ? "mock data" : "datos simulados"}</span>`;
+    flag.innerHTML = html;
+  }
+
   async function load() {
     const payload = FSStore.buildPayload();
     try {
@@ -13,13 +35,10 @@
       data = res.data;
       document.getElementById("loading").classList.add("hidden");
       document.getElementById("content").classList.remove("hidden");
-      if (res.offline || data._mock) {
-        document.getElementById("mock-flag").classList.remove("hidden");
-      }
+      stamp(res.offline, data._mock);
       render();
     } catch (e) {
-      document.getElementById("loading").innerHTML =
-        '<p class="text-red-600">No se pudo obtener la recomendación. ¿Está el servidor encendido?</p>';
+      showError();
     }
   }
 
