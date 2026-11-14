@@ -1,42 +1,29 @@
-/* Field Shift — profil de l'agriculteur (sélection par boutons). */
+/* Field Shift — profil de l'agriculteur. */
 (function () {
-  const state = { crop: "maize", irrigation: false };
+  const state = { crop: "maize", irrigation: false, priority: "balanced" };
   const saved = FSStore.getProfile();
   const soil = document.getElementById("soil");
-  const priority = document.getElementById("priority");
-
   if (saved) {
     state.crop = saved.crop || "maize";
     state.irrigation = !!saved.irrigation;
+    state.priority = saved.priority || "balanced";
     if (saved.soil_type) soil.value = saved.soil_type;
-    if (saved.priority) priority.value = saved.priority;
   }
 
-  const cropBtns = Array.from(document.querySelectorAll(".crop-btn"));
-  const irrBtns = Array.from(document.querySelectorAll(".irr-btn"));
-
-  // N'utilise que des classes déjà présentes à l'écran (compilées par Tailwind).
-  function setActive(btn, on) {
-    btn.classList.toggle("bg-primary", on);
-    btn.classList.toggle("text-primary-foreground", on);
-    btn.classList.toggle("bg-card", !on);
-  }
+  const groups = [
+    { sel: ".crop-btn", match: (b) => b.dataset.crop === state.crop, set: (b) => { state.crop = b.dataset.crop; } },
+    { sel: ".irr-btn", match: (b) => (b.dataset.irr === "true") === state.irrigation, set: (b) => { state.irrigation = b.dataset.irr === "true"; } },
+    { sel: ".prio-btn", match: (b) => b.dataset.prio === state.priority, set: (b) => { state.priority = b.dataset.prio; } },
+  ];
   function paint() {
-    cropBtns.forEach((b) => setActive(b, b.dataset.crop === state.crop));
-    irrBtns.forEach((b) => setActive(b, (b.dataset.irr === "true") === state.irrigation));
+    groups.forEach((g) => document.querySelectorAll(g.sel).forEach((b) => b.classList.toggle("is-active", g.match(b))));
   }
-
-  cropBtns.forEach((b) => b.addEventListener("click", () => { state.crop = b.dataset.crop; paint(); }));
-  irrBtns.forEach((b) => b.addEventListener("click", () => { state.irrigation = b.dataset.irr === "true"; paint(); }));
+  groups.forEach((g) => document.querySelectorAll(g.sel).forEach((b) =>
+    b.addEventListener("click", () => { g.set(b); paint(); })));
   paint();
 
   document.getElementById("submit-btn").addEventListener("click", () => {
-    FSStore.setProfile({
-      crop: state.crop,
-      soil_type: soil.value,
-      irrigation: state.irrigation,
-      priority: priority.value,
-    });
-    window.location.href = "/panel.html";
+    FSStore.setProfile({ crop: state.crop, soil_type: soil.value, irrigation: state.irrigation, priority: state.priority });
+    window.location.href = FSStore.getField() ? "/panel.html" : "/campo.html";
   });
 })();

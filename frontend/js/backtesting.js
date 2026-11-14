@@ -1,47 +1,40 @@
 /* Field Shift — backtesting : « l'outil aurait-il prévenu lors des sécheresses passées ? ». */
 (function () {
   const t = (k) => FSI18N.t(k);
-  let data = null;
-  const RISK = { low: "risk-low-soft", moderate: "risk-moderate-soft", high: "risk-high-soft" };
+  const BADGE = { low: "badge-green", moderate: "badge-amber", high: "badge-red" };
 
   async function load() {
+    const loading = document.getElementById("loading");
     try {
       const res = await FSApi.getBacktesting(FSStore.buildPayload());
-      data = res.data;
-      document.getElementById("loading").classList.add("hidden");
+      loading.classList.add("hidden");
       document.getElementById("content").classList.remove("hidden");
-      render();
+      render(res.data);
     } catch (e) {
-      document.getElementById("loading").innerHTML = `<p class="text-destructive">${t("panel.error")}</p>`;
+      loading.innerHTML = `<p class="c-red" style="margin-bottom:16px">${t("panel.error")}</p>
+        <button class="btn btn-dark" onclick="location.reload()">${t("panel.retry")}</button>`;
     }
   }
 
-  function render() {
+  function render(data) {
     document.getElementById("bt-summary").textContent = data.summary;
     document.getElementById("bt-list").innerHTML = data.seasons.map((s) => {
-      const badge = RISK[s.risk_level] || "risk-moderate-soft";
-      const icon = s.warned ? "solar:danger-triangle-linear" : "solar:check-circle-linear";
-      const iconColor = s.warned ? "text-destructive" : "text-chart-4";
-      const tag = (s.tag && s.tag !== "—")
-        ? `<span class="rounded-full bg-accent/20 text-accent-foreground px-2 py-0.5 text-xs font-semibold">${s.tag}</span>` : "";
-      return `<article class="rounded-3xl bg-card border border-border p-5">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-2">
-            <span class="font-heading text-lg font-bold">${s.season}</span>${tag}
-          </div>
-          <span class="rounded-full ${badge} px-3 py-1 text-sm font-semibold">${t("bt.alert")} : ${s.risk_score}</span>
+      const tag = s.tag && s.tag !== "—" ? `<span class="badge badge-yellow">${s.tag}</span>` : "";
+      const pct = Math.min(100, s.rainfall_pct);
+      return `<article class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+          <div style="display:flex;align-items:center;gap:8px"><h3 style="font-size:22px">${s.season}</h3>${tag}</div>
+          <span class="badge ${BADGE[s.risk_level] || "badge-gray"}">${t("bt.alert")} · ${s.risk_score}</span>
         </div>
-        <div class="mt-3 h-2.5 w-full rounded-full bg-muted overflow-hidden">
-          <div class="h-full rounded-full bg-chart-1" style="width:${Math.min(100, s.rainfall_pct)}%"></div>
-        </div>
-        <p class="mt-1 text-sm text-muted-foreground">${t("bt.rainfall")} : ${s.rainfall_pct}%</p>
-        <div class="mt-3 flex items-center gap-2 ${iconColor} font-medium text-sm">
-          <iconify-icon icon="${icon}" width="20" height="20"></iconify-icon><span>${s.outcome}</span>
-        </div>
+        <div class="bar"><div style="width:${pct}%;background:${pct < 70 ? "#E5A12A" : "#3F9D22"}"></div></div>
+        <p class="small muted" style="margin-top:8px">${t("bt.rainfall")} : <b>${s.rainfall_pct} %</b></p>
+        <p class="bold ${s.warned ? "c-red" : "c-green"}" style="display:flex;align-items:center;gap:8px;margin-top:12px">
+          ${FSUI.icon(s.warned ? "solar:danger-triangle-bold" : "solar:check-circle-bold", 20)} ${s.outcome}
+        </p>
       </article>`;
     }).join("");
   }
 
-  document.addEventListener("fs:langchange", () => { load(); });
+  document.addEventListener("fs:langchange", load);
   load();
 })();
