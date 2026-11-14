@@ -1,38 +1,51 @@
-/* Field Shift — copiloto IA (chat). Explica la recomendación ya calculada. */
+/* Field Shift — assistant (chat). Explique la recommandation déjà calculée. */
 (function () {
   const chat = document.getElementById("chat");
   const form = document.getElementById("chat-form");
   const input = document.getElementById("q");
 
+  // Crée une bulle ; renvoie l'élément texte (pour le mettre à jour ensuite).
   function bubble(text, who) {
-    const el = document.createElement("div");
-    const mine = who === "user";
-    el.className = "fs-card p-3 text-sm max-w-[85%] " +
-      (mine ? "ml-auto bg-green-50" : "mr-auto");
-    el.style.whiteSpace = "pre-wrap";
-    el.textContent = text;
-    chat.appendChild(el);
-    el.scrollIntoView({ behavior: "smooth", block: "end" });
-    return el;
+    const wrap = document.createElement("div");
+    let textEl;
+    if (who === "user") {
+      wrap.className = "flex justify-end";
+      textEl = document.createElement("p");
+      textEl.className = "max-w-[80%] rounded-3xl rounded-br-md bg-primary text-primary-foreground px-5 py-4 text-base leading-relaxed";
+      textEl.style.whiteSpace = "pre-wrap";
+      textEl.textContent = text;
+      wrap.appendChild(textEl);
+    } else {
+      wrap.className = "flex gap-3";
+      const av = document.createElement("div");
+      av.className = "size-10 shrink-0 rounded-2xl bg-secondary text-secondary-foreground flex items-center justify-center";
+      av.innerHTML = '<iconify-icon icon="solar:stars-bold" width="20" height="20"></iconify-icon>';
+      textEl = document.createElement("div");
+      textEl.className = "flex-1 rounded-3xl rounded-tl-md bg-card border border-border p-5 text-base";
+      textEl.style.whiteSpace = "pre-wrap";
+      textEl.textContent = text;
+      wrap.appendChild(av);
+      wrap.appendChild(textEl);
+    }
+    chat.appendChild(wrap);
+    wrap.scrollIntoView({ behavior: "smooth", block: "end" });
+    return textEl;
   }
 
   function sources(list) {
     if (!list || !list.length) return;
     const el = document.createElement("p");
-    el.className = "text-xs text-gray-400 mr-auto";
+    el.className = "text-xs text-muted-foreground";
+    el.style.marginLeft = "52px";
     el.textContent = FSI18N.t("copilot.sources") + " " + list.join(" · ");
     chat.appendChild(el);
   }
 
-  // Mensaje de bienvenida con el contexto del campo.
-  const reco = FSStore.getLastReco();
-  if (reco) {
-    bubble(reco.ai_explanation || "", "bot");
-  } else {
-    bubble(FSI18N.lang === "en"
-      ? "Select a field and fill your profile first, then I can explain your recommendation."
-      : "Primero selecciona un campo y completa tu perfil; luego podré explicar tu recomendación.", "bot");
+  function welcome() {
+    const reco = FSStore.getLastReco();
+    bubble(reco ? (reco.ai_explanation || "") : FSI18N.t("copilot.welcome_nofield"), "bot");
   }
+  welcome();
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -46,22 +59,16 @@
     sources(res.sources);
   });
 
-  // Preguntas sugeridas (chips) — ayudan al agricultor a empezar.
-  const SUGG = {
-    es: ["¿Tengo suficiente agua?", "¿Cuándo debo sembrar?",
-         "¿Qué rotación me conviene?", "No tengo riego, ¿qué hago?"],
-    en: ["Do I have enough water?", "When should I plant?",
-         "Which rotation fits me?", "I have no irrigation, what should I do?"],
-  };
+  // Questions suggérées (chips).
   function renderChips() {
     const box = document.getElementById("chips");
     box.innerHTML = "";
-    (SUGG[FSI18N.lang] || SUGG.es).forEach((q) => {
+    ["copilot.sugg1", "copilot.sugg2", "copilot.sugg3", "copilot.sugg4"].forEach((k) => {
       const b = document.createElement("button");
       b.type = "button";
-      b.className = "chip-q";
-      b.textContent = q;
-      b.addEventListener("click", () => { input.value = q; form.requestSubmit(); });
+      b.className = "h-11 shrink-0 rounded-full border border-border bg-card px-4 text-sm font-medium";
+      b.textContent = FSI18N.t(k);
+      b.addEventListener("click", () => { input.value = b.textContent; form.requestSubmit(); });
       box.appendChild(b);
     });
   }

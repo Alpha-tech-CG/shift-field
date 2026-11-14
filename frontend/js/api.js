@@ -5,12 +5,14 @@
 (function () {
   const BASE = ""; // mismo origen: el backend sirve el front.
 
+  function lang() { return window.FSI18N ? FSI18N.lang : "fr"; }
+
   async function getRecommendation(payload) {
     try {
       const res = await fetch(BASE + "/api/recommendation", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(Object.assign({}, payload, { lang: lang() })),
       });
       if (!res.ok) throw new Error("HTTP " + res.status);
       const data = await res.json();
@@ -28,7 +30,7 @@
       const res = await fetch(BASE + "/api/copilot", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question, context }),
+        body: JSON.stringify({ question, context, lang: lang() }),
       });
       if (!res.ok) throw new Error("HTTP " + res.status);
       return await res.json();
