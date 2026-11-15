@@ -421,7 +421,8 @@
     if (gridReq && gridReq.key === key) return gridReq.p;
     const p = fetch("/api/grid", { method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ latitude: state.lat, longitude: state.lng }) })
-      .then((r) => (r.ok ? r.json() : null)).then((g) => (g && g.lats ? g : null)).catch(() => null);
+      .then((r) => (r.ok ? r.json() : null)).then((g) => (g && g.lats ? g : null)).catch(() => null)
+      .then((g) => { if (!g && gridReq && gridReq.key === key) gridReq = null; return g; });  // échec : on réessaiera
     gridReq = { key, p };
     return p;
   }

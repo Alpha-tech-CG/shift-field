@@ -166,20 +166,32 @@ def grid(lat: float, lon: float) -> dict[str, Any]:
     lats = [max(-89.9, min(89.9, lat + GRID_STEP * (half - i))) for i in range(GRID_N)]   # nord -> sud
     lons = [lon + GRID_STEP * (j - half) for j in range(GRID_N)]                          # ouest -> est
     pts = [(a, ((b + 180) % 360) - 180) for a in lats for b in lons]
+    params = {"current": "temperature_2m,wind_speed_10m,wind_direction_10m",
+              "daily": "precipitation_sum,shortwave_radiation_sum",
+              "past_days": 60, "forecast_days": 1, "timezone": "auto"}
+
     def _chunk(part):
-        r = _get("https://api.open-meteo.com/v1/forecast", {
-            "latitude": ",".join(f"{a:.4f}" for a, _ in part),
-            "longitude": ",".join(f"{b:.4f}" for _, b in part),
-            "current": "temperature_2m,wind_speed_10m,wind_direction_10m",
-            "daily": "precipitation_sum,shortwave_radiation_sum",
-            "past_days": 60, "forecast_days": 1, "timezone": "auto",
-        })
-        return r if isinstance(r, list) else [r]
+        # Open-Meteo répond parfois lentement depuis Vercel : 2 essais courts, puis on
+        # rend des cases vides (la carte reste affichée, juste trouée) plutôt qu'une erreur.
+        q = dict(params, latitude=",".join(f"{a:.4f}" for a, _ in part),
+                 longitude=",".join(f"{b:.4f}" for _, b in part))
+        for _ in range(2):
+            try:
+                full = "https://api.open-meteo.com/v1/forecast?" + urllib.parse.urlencode(q)
+                req = urllib.request.Request(full, headers=UA)
+                with urllib.request.urlopen(req, timeout=8, context=_SSL) as resp_:
+                    r = json.loads(resp_.read().decode("utf-8"))
+                return r if isinstance(r, list) else [r]
+            except Exception:
+                continue
+        return [{} for _ in part]
 
     # 81 points en UNE requête dépassait le délai depuis les serveurs Vercel : 3 requêtes
     # de 27 points en parallèle, dans l'ordre d'origine.
     parts = [pts[i:i + 27] for i in range(0, len(pts), 27)]
     resp = [x for chunk in _POOL.map(_chunk, parts) for x in chunk]
+    if not any(r.get("current") for r in resp):
+        raise TimeoutError("open_meteo_unavailable")
     temp, wind, wdir, rain60, solar7 = [], [], [], [], []
     when = None
     for r in resp:
@@ -199,7 +211,8 @@ def grid(lat: float, lon: float) -> dict[str, Any]:
     out = {"n": GRID_N, "lats": [round(a, 4) for a in lats], "lons": [round(b, 4) for b in lons],
            "temp": temp, "wind": wind, "wind_dir": wdir, "rain60": rain60, "solar7": solar7,
            "time": when, "source": "Open-Meteo"}
-    _GRID[key] = (time.time(), out)
+    if all(r.get("current") for r in resp):  # on ne garde en cache qu'une grille complète
+        _GRID[key] = (time.time(), out)
     return out
 
 
