@@ -1,16 +1,19 @@
-"""Field Shift — Aplicación FastAPI (Flux 1).
+"""Field Shift — Application FastAPI.
 
-Responsabilidades de este archivo (volet Producto / Full-Stack):
-  * Servir la PWA (archivos estáticos del front).
-  * Exponer la API que consume el front, con el formato del contrato 8.6.
+Flux 1 (Zlat) : la PWA + l'API mock.  Flux 2 (ML/IA) : le VRAI moteur.
 
-Por ahora la API usa un motor MOCK (mock_engine). El Flux 2 reemplazará ese
-motor por el pipeline real NASA + ML + IA sin cambiar el formato de respuesta.
+Ce fichier sert la PWA (fichiers statiques du front) et expose l'API que
+consomme le front, au format du contrat §8.6. Les routes pointent désormais sur
+`real_engine` (NASA POWER + modèle ML + copilote Gemini). `real_engine` retombe
+tout seul sur `mock_engine` en cas de problème, donc la démo ne casse jamais.
 
-Ejecutar:
+Exécuter :
     cd backend
+    pip install -r requirements.txt
     uvicorn main:app --reload
-Luego abrir:  http://127.0.0.1:8000/
+Puis ouvrir : http://127.0.0.1:8000/
+(Pour le copilote IA en direct : mettre GEMINI_API_KEY dans backend/.env —
+sans clé, les réponses restent utiles via le fallback déterministe.)
 """
 from __future__ import annotations
 
@@ -21,17 +24,25 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from mock_engine import backtesting, copilot_answer, generate_recommendation
+# Charge backend/.env (clé Gemini) si présent — no-op sinon.
+try:
+    from dotenv import load_dotenv
+
+    load_dotenv(Path(__file__).resolve().parent / ".env")
+except Exception:
+    pass
+
+import real_engine as engine
 
 FRONTEND_DIR = (Path(__file__).resolve().parent.parent / "frontend")
 
 app = FastAPI(
     title="Field Shift API",
-    description="Decisiones de siembra ante la sequía a partir de datos NASA.",
-    version="0.1.0-mvp",
+    description="Décisions de siembra ante la sequía a partir de datos NASA (NASA POWER + ML + IA).",
+    version="1.0.0-flux2",
 )
 
-# CORS abierto en desarrollo (front y back pueden correr por separado).
+# CORS ouvert en développement (front et back peuvent tourner séparément).
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -42,34 +53,32 @@ app.add_middleware(
 
 @app.get("/api/health")
 def health() -> dict[str, str]:
-    return {"status": "ok", "service": "field-shift", "mode": "mock"}
+    return {"status": "ok", "service": "field-shift", "mode": "real"}
 
 
 @app.post("/api/recommendation")
 async def recommendation(payload: dict) -> JSONResponse:
-    """Devuelve la recomendación completa para un campo (contrato 8.6)."""
-    result = generate_recommendation(payload or {})
-    return JSONResponse(result)
+    """Recommandation complète pour un champ (contrat §8.6, données réelles)."""
+    return JSONResponse(engine.generate_recommendation(payload or {}))
 
 
 @app.post("/api/backtesting")
 async def backtest(payload: dict) -> JSONResponse:
-    """Démo backtesting : saisons sèches passées + « aurait prévenu ? »."""
-    return JSONResponse(backtesting(payload or {}))
+    """Backtesting : « l'outil aurait-il prévenu ? » sur les saisons sèches passées."""
+    return JSONResponse(engine.backtesting(payload or {}))
 
 
 @app.post("/api/copilot")
 async def copilot(payload: dict) -> JSONResponse:
-    """Copiloto IA (mock). Entrada: {question, context}."""
+    """Copilote IA (Gemini). Entrée : {question, context, lang}."""
     payload = payload or {}
-    result = copilot_answer(
+    return JSONResponse(engine.copilot_answer(
         question=str(payload.get("question", "")),
         context=payload.get("context"),
         lang=str(payload.get("lang", "fr")),
-    )
-    return JSONResponse(result)
+    ))
 
 
-# IMPORTANTE: montar los estáticos al final, para que no tape las rutas /api.
+# IMPORTANT : monter les statiques en dernier, pour ne pas masquer les routes /api.
 if FRONTEND_DIR.is_dir():
     app.mount("/", StaticFiles(directory=str(FRONTEND_DIR), html=True), name="frontend")
