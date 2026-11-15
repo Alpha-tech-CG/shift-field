@@ -150,15 +150,18 @@ def _era5_normal(lat: float, lon: float) -> dict[str, Any]:
 # Grille météo autour de la parcelle pour les couches du globe (pluie 60 j, température,
 # vent, soleil). Même modèle et même fenêtre que les chiffres de l'analyse : le point
 # central de la grille EST la parcelle, donc la carte et le texte disent la même chose.
-GRID_N = 9          # 9 x 9 points
-GRID_STEP = 0.85    # degrés entre deux points (~95 km) -> ±3,4° autour du champ
+GRID_N = 7          # 7 x 7 points (49) : Open-Meteo compte chaque point x 60 jours comme
+GRID_STEP = 1.1     # plusieurs appels ; 81 points épuisaient le quota de l'IP partagée de Vercel
 _GRID: dict[str, tuple[float, dict[str, Any]]] = {}
-_GRID_TTL = 1800
+_GRID_TTL = 6 * 3600  # la pluie sur 60 jours bouge peu : 6 h de cache
 
 
 def grid(lat: float, lon: float) -> dict[str, Any]:
     """Valeurs Open-Meteo sur une grille centrée sur (lat, lon). Lève une exception si la source échoue."""
-    key = f"{round(lat, 2)}:{round(lon, 2)}"
+    # Les parcelles voisines (≈ 25 km) partagent la même carte : moins d'appels.
+    lat = round(lat * 4) / 4
+    lon = round(lon * 4) / 4
+    key = f"{lat}:{lon}"
     hit = _GRID.get(key)
     if hit and time.time() - hit[0] < _GRID_TTL:
         return hit[1]
@@ -188,9 +191,11 @@ def grid(lat: float, lon: float) -> dict[str, Any]:
 
     # 81 points en UNE requête dépassait le délai depuis les serveurs Vercel : 3 requêtes
     # de 27 points en parallèle, dans l'ordre d'origine.
-    parts = [pts[i:i + 27] for i in range(0, len(pts), 27)]
+    parts = [pts[i:i + 17] for i in range(0, len(pts), 17)]
     resp = [x for chunk in _POOL.map(_chunk, parts) for x in chunk]
     if not any(r.get("current") for r in resp):
+        if hit:  # quota ou panne : on ressert la dernière carte connue plutôt que rien
+            return dict(hit[1], stale=True)
         raise TimeoutError("open_meteo_unavailable")
     temp, wind, wdir, rain60, solar7 = [], [], [], [], []
     when = None

@@ -3,8 +3,8 @@
    - Librairies CDN (Chart.js, Leaflet, Iconify, polices) : stale-while-revalidate,
      pour que l'appli reste utilisable hors-ligne.
    - API et tuiles de carte : réseau (l'appli garde sa dernière reco en localStorage). */
-const CACHE = "field-shift-v35";
-const RUNTIME = "field-shift-rt-v35";
+const CACHE = "field-shift-v36";
+const RUNTIME = "field-shift-rt-v36";
 const SHELL = [
   "/", "/site.html", "/inicio.html", "/globo.html", "/index.html", "/campo.html", "/perfil.html", "/panel.html", "/analyse.html", "/rotaciones.html",
   "/copiloto.html", "/cooperativa.html", "/backtesting.html",

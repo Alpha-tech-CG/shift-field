@@ -560,7 +560,11 @@
       const g = await loadGrid();
       if (state.layer !== k) return;
       if (!g) { $("lg-max").textContent = ""; $("lg-date").textContent = T("gl.none"); box.classList.add("is-stale"); return; }
-      const vals = g[L.grid], here = vals[Math.floor(vals.length / 2)];
+      // Valeur « ici » = le chiffre exact du rapport (la grille est centrée au quart de degré
+      // près pour être partagée entre parcelles voisines).
+      const r = state.reco || {}, ni = r.nasa_indicators || {}, wi = r.weather || {};
+      const exact = { rain: ni.rainfall_60d_mm, temp: wi.temperature_c, wind: wi.wind_speed_kmh, solar: ni.solar_radiation }[k];
+      const vals = g[L.grid], here = exact != null ? exact : vals[Math.floor(vals.length / 2)];
       $("lg-max").textContent = `${gridMax(L, vals)} ${L.unit}`;
       const when = g.time ? ` · ${Terra.fmtDate(g.time.slice(0, 10))} ${g.time.slice(11, 16)}` : "";
       $("lg-title").textContent = here != null ? `${T("layer." + k)} · ${T("gl.here", { v: `${here} ${L.unit}` })}` : T("layer." + k);
