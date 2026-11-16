@@ -510,6 +510,10 @@
     state.layer = k;
     document.querySelectorAll(".layer-btn").forEach((b) => b.setAttribute("aria-pressed", b.dataset.layer === k));
     wind(k === "wind");
+    // Légende et explication tout de suite, sans attendre la carte (qui peut être en pause
+    // si l'onglet est en arrière-plan ou si la carte charge lentement).
+    paintLegend(k);
+    renderInsight(k);
     if (map) {
       await mapReady;
       Object.keys(LAYERS).forEach((o) => ["gibs-", "grid-", "eco-"].forEach((p) => { if (map.getLayer(p + o)) map.setLayoutProperty(p + o, "visibility", "none"); }));
@@ -528,8 +532,6 @@
         map.flyTo({ center: [state.lng, state.lat], zoom: 14.6, pitch: 52, bearing: -10, duration: 2600, essential: true });
       }
     }
-    paintLegend(k);
-    renderInsight(k);
   }
 
   async function paintLegend(k) {
